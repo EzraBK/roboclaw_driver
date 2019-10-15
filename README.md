@@ -4,6 +4,25 @@
 
 A ROS node providing a driver interface to the Roboclaw motor controller.
 
+GEORGE-EDIT: and an added node "motor_control" that prepares the commands to send to that interface. 
+Essentially a Twist (base linear velocity and angular velocity setpoint) -> Wheel speed command bridge.
+
+## Motor Control ...GEORGE-EDIT
+Feel free to read the other section before this so it makes more sense
+
+I used this particular repo because it allows greater configurability over the drive motors
+
+The launch files roboclaw.launch and stub.launch (for testing without the roboclaw) will now 
+launch nodes for each roboclaw controller used and the motor controller node with options
+
+* `robot_cmd_topic` - topic that twist messages will appear on
+* `motor_config` - String specifing config eg "2WD" and "4WD"
+* `base_width` - Width between the wheels in mm
+* `ticks_per_meter` - The number of encoder ticks per meter of movement straight forwards
+* `max_secs` - Maximum time before the motor automatically stops after a command in seconds
+
+The launch files will show the relevant edits for a 4WD configuration although this is not yet implemented by the motor control node
+
 ## Why another ROS Roboclaw driver?
 There are several existing ROS nodes for the roboclaw, including:
 
@@ -57,7 +76,7 @@ Clone the repository
 
 ```
 cd $ROS_WORKSPACE/src
-git clone https://github.com/sheaffej/roboclaw_driver.git
+git clone https://github.com/georgeman93/roboclaw_driver.git
 ```
 
 Build the package to create the message bindings
@@ -70,7 +89,7 @@ catkin_make
 Launch the node
 
 ```
-roslaunch roboclaw_driver roboclaw_node
+roslaunch roboclaw_driver roboclaw.launch
 ```
 
 ## Tests
