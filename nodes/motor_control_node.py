@@ -15,13 +15,16 @@ from math import *
 if __name__ == '__main__':
 
     rospy.init_node('motor_control', anonymous=True)
-    motor_config = rospy.get_param("motor_control/motor_config")
+    FourWD = rospy.get_param("motor_control/4WD")
+    print(FourWD)
+    FourWD = bool(FourWD)
+    print(FourWD)
 
-    if motor_config == "2WD":
+    if not FourWD:
         motors_pub = rospy.Publisher('roboclaw/speed_command', SpeedCommand, queue_size = 1)
-    elif motor_config == "4WD":
-        motor_front_pub = rospy.Publisher('roboclaw/speed_command/front', SpeedCommand, queue_size = 1)
-        motor_back_pub = rospy.Publisher('roboclaw/speed_command/back', SpeedCommand, queue_size = 1)
+    elif FourWD:
+        motor_right_pub = rospy.Publisher('roboclaw/speed_command/right', SpeedCommand, queue_size = 1)
+        motor_left_pub = rospy.Publisher('roboclaw/speed_command/left', SpeedCommand, queue_size = 1)
     
     
     
@@ -33,9 +36,9 @@ if __name__ == '__main__':
     #function triggered when a motor command is published
     def motor_cmd_callback(twist_msg):
         rospy.logdebug("Received motor command twist message")
-        rospy.logdebug("Motor config: " + motor_config)
+        rospy.logdebug("FourWD: ", FourWD)
         #different implementation for different motor configs 
-        if motor_config == "2WD":
+        if not FourWD:
             #take the twist message
             linear_x = twist_msg.linear.x #check the driver node does speed limiting
             #angular components are in radians/second
@@ -55,10 +58,29 @@ if __name__ == '__main__':
             motors_pub.publish(msg)
 
         #fill this out if needed...
-        elif motor_config == "4WD":
-            pass
-            # motor_front_pub.publish()
-            # motor_back_pub.publish()
+        elif FourWD:
+            #take the twist message
+            linear_x = twist_msg.linear.x #check the driver node does speed limiting
+            #angular components are in radians/second
+            #to convert to m/s we multiply by m/rad ie 
+
+            #if rotating at w then the rim is traveling at w*r
+            #so m/rad is equal to the radius 
+            vr = linear_x + twist_msg.angular.z * base_width / 2.0  # m/s
+            vl = linear_x - twist_msg.angular.z * base_width / 2.0
+
+            vr_ticks = int(vr * ticks_per_meter)  # ticks/s or qpps
+            vl_ticks = int(vl * ticks_per_meter)
+            msgR = SpeedCommand()
+            msgL = SpeedCommand()
+            msgR.m1_qpps = vr_ticks
+            msgR.m2_qpps = vr_ticks
+            msgR.max_secs = max_secs
+            msgL.m1_qpps = vl_ticks
+            msgL.m2_qpps = vl_ticks
+            msgL.max_secs = max_secs
+            motor_right_pub.publish(msgR)
+            motor_left_pub.publish(msgL)
         
 
 
